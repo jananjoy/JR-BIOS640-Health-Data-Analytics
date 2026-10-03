@@ -22,7 +22,7 @@ library(ggpubr)
 library(here)
 
 nhanes_data <- read_csv(
-  here("Week3", "cleaned_NHANES.csv"),
+  here("data", "cleaned_NHANES.csv"),
   show_col_types = FALSE
 )
 
