@@ -19,6 +19,13 @@ knitr::opts_chunk$set(
 library(tidyverse)
 library(cowplot)
 library(ggpubr)
+library(here)
+
+nhanes_data <- read_csv(
+  here("Week3", "cleaned_NHANES.csv"),
+  show_col_types = FALSE
+)
+
 ```
 
 # Exercise 1: Reproducing and Arranging ggplot2 Figures
@@ -31,7 +38,7 @@ The required packages were loaded in the global setup chunk.
 
 ```{r ex1-import-data}
 nhanes_data <- read_csv(
-  "D:/RSource/BIOS640/Week3/cleaned_NHANES.csv",
+  here("data", "cleaned_NHANES.csv"),
   show_col_types = FALSE
 )
 ```
@@ -85,7 +92,7 @@ ethnicity_candidates <- names(nhanes_data)[
   )
 ]
 
-cat("Ethnicity variables found:\n")
+cat("Ethnicity variables foun\n")
 print(ethnicity_candidates)
 ```
 
@@ -252,7 +259,7 @@ This exercise examines the distributions of age, gender, and ethnicity in the cl
 
 ```{r ex2-import-data}
 nhanes_data <- read_csv(
-  "D:/RSource/BIOS640/Week3/cleaned_NHANES.csv",
+  here("data", "cleaned_NHANES.csv"),
   show_col_types = FALSE
 )
 ```
@@ -688,7 +695,7 @@ library(tidyverse)
 
 ```{r ex3-import-data, message=FALSE, warning=FALSE}
 diet_data <- read_csv(
-  "D:/RSource/BIOS640/Week3/diet.csv",
+  here("data", "diet.csv"),
   show_col_types = FALSE
 )
 ```
@@ -844,7 +851,7 @@ print(weight_change_plot)
 
 ```{r ex3-save-plot}
 ggsave(
-  "D:/RSource/BIOS640/Week3/diet_weight_change.png",
+  here("figures", "diet_weight_change.png"), 
   plot = weight_change_plot,
   width = 9,
   height = 6,
@@ -868,7 +875,7 @@ The cleaned NHANES dataset was imported and the relevant variables were identifi
 
 ```{r ex4-import-data, message=FALSE, warning=FALSE}
 nhanes_data <- read_csv(
-  "D:/RSource/BIOS640/Week3/cleaned_NHANES.csv",
+  here("data", "cleaned_NHANES.csv"),  
   show_col_types = FALSE
 )
 ```
@@ -1138,7 +1145,7 @@ The Exercise 2 plot was created using the complete cleaned NHANES dataset and wa
 
 ```{r ex4-reuse-exercise2-age-plot, out.width="90%"}
 knitr::include_graphics(
-  "D:/RSource/BIOS640/Week3/age_distribution.png"
+   here("figures", "age_distribution.png")  
 )
 ```
 
@@ -1172,7 +1179,7 @@ The final age distribution is also saved for future use.
 
 ```{r ex4-save-final-age}
 ggsave(
-  "D:/RSource/BIOS640/Week3/exercise4_age_distribution_final.png",
+  here("figures", "exercise4_age_distribution_final.png"), 
   plot = plot_age_final,
   width = 8,
   height = 6,
@@ -1218,7 +1225,7 @@ The categories are displayed in a logical order from Normal through Stage 2 hype
 
 ```{r ex4-save-hypertension}
 ggsave(
-  "D:/RSource/BIOS640/Week3/exercise4_hypertension_categories.png",
+  here("figures", "exercise4_hypertension_categories.png"), 
   plot = plot_hypertension,
   width = 9,
   height = 6,
@@ -1256,7 +1263,7 @@ print(plot_gender)
 
 ```{r ex4-save-gender}
 ggsave(
-  "D:/RSource/BIOS640/Week3/exercise4_gender_distribution.png",
+  here("figures", "exercise4_gender_distribution.png"), 
   plot = plot_gender,
   width = 8,
   height = 6,
@@ -1313,7 +1320,7 @@ The faceted visualization allows the distribution of hypertension categories to 
 
 ```{r ex4-save-final-visualization}
 ggsave(
-  "D:/RSource/BIOS640/Week3/exercise4_final_visualization.png",
+  here("figures", "exercise4_final_visualization.png"), 
   plot = final_plot,
   width = 11,
   height = 7,
@@ -1338,7 +1345,7 @@ The final analytical dataset, including average SBP, hypertension category, and 
 ```{r ex4-save-final-data}
 write_csv(
   nhanes_final,
-  "D:/RSource/BIOS640/Week3/NHANES_Exercise4_final.csv"
+  here("data", "NHANES_Exercise4_final.csv"),  
 )
 ```
 
