@@ -3,10 +3,13 @@ title: "BIOS640 Week 4 Summary"
 author: "Jananjoy Rajkumar"
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
+ html_document:
     toc: true
+    toc_float: true
+    toc_depth: 2
     number_sections: true
-geometry: margin=1in
+    theme: cosmo
+    highlight: tango
 ---
 
 ```{r setup, include=FALSE}
