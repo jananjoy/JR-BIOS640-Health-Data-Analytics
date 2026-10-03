@@ -1,0 +1,866 @@
+---
+title: "BIOS640 Week 2 Summary"
+author: "Jananjoy Rajkumar"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    number_sections: true
+geometry: margin=1in
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  results = "hide",
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+<!--START OF THE EXCERCISE 1-->
+
+# Exercise 1: Writing a report in R Markdown 
+
+## Introduction
+
+The National Health and Nutrition Examination Survey (NHANES) is a population-based survey that collects information on the health, nutritional status, and demographic characteristics of people in the United States. The data include demographic information as well as measurements obtained during physical examinations.
+
+In this exercise, NHANES demographic and blood pressure examination data are imported into R from SAS Transport (`.XPT`) files. The demographic data provide information such as age, gender, race and ethnicity, education, marital status, family size, and family income. The examination data provide blood pressure measurements, including systolic and diastolic blood pressure readings obtained during the physical examination.
+
+The main objective of this analysis is to practice importing, cleaning, combining, and exploring NHANES data using R. The demographic and blood pressure datasets from the 2013–2014, 2015–2016, and 2017–2018 survey cycles are combined and joined using the participant identification number and survey-wave identifier.
+
+The analysis is then restricted to adult participants with valid age measurements. Descriptive statistics, frequency tables, and data summaries are used to explore the demographic characteristics and blood pressure measurements. The blood pressure variables are also reshaped from wide format to long format to facilitate further analysis.
+
+The cleaned dataset is saved in both RDS and CSV formats for future analysis.
+
+
+## Load Required Packages
+The following packages were used:
+
+- `rio` for importing NHANES `.XPT` datasets.
+- `tidyverse` for data manipulation and visualization.
+- `knitr` for processing R Markdown code.
+- `rmarkdown` for generating reports.
+- `skimr` for reviewing the structure and summary information of the dataset.
+- `janitor` for cleaning column names.
+
+```{r load_packages}
+library(rio)  
+library(tidyverse)  
+library(knitr)  
+library(rmarkdown)  
+library(skimr)  
+library(janitor)  
+```
+
+## Verify Working Directory and Data Folder  
+The project directory and data folder were verified to ensure that all required NHANES datasets were available.
+
+```{r verify_data_folder}
+
+# Identify the current working directory of the R project.
+getwd()
+
+# Display the files and folders in the working directory.
+list.files()
+
+# Verify the contents of the data folder.
+list.files("data")
+
+# Verify that each NHANES dataset exists in the data folder.
+# The function returns TRUE if the file exists and FALSE if it is missing.
+file.exists("data/DEMO_H.XPT")
+file.exists("data/BPX_H.XPT")
+file.exists("data/DEMO_I.XPT")
+file.exists("data/BPX_I.XPT")
+file.exists("data/DEMO_J.XPT")
+file.exists("data/BPX_J.XPT")
+```
+
+
+## Import  NHANES Demographic and  Examination (Blood Pressure) Data  
+
+The six NHANES datasets were imported using the `import()` function from the `rio` package. 
+
+```{r import_nhanes_data} 
+
+# Import the 2013–2014 NHANES demographic data. 
+nhanes_demographics_2013_2014 <- import( "data/DEMO_H.XPT" ) 
+
+# Import the 2013–2014 NHANES blood pressure examination data. 
+nhanes_blood_pressure_2013_2014 <- import( "data/BPX_H.XPT" ) 
+
+# Import the 2015–2016 NHANES demographic data. 
+nhanes_demographics_2015_2016 <- import( "data/DEMO_I.XPT" ) 
+
+# Import the 2015–2016 NHANES blood pressure examination data. 
+nhanes_blood_pressure_2015_2016 <- import( "data/BPX_I.XPT" ) 
+
+# Import the 2017–2018 NHANES demographic data. 
+nhanes_demographics_2017_2018 <- import( "data/DEMO_J.XPT" ) 
+
+# Import the 2017–2018 NHANES blood pressure examination data. 
+nhanes_blood_pressure_2017_2018 <- import( "data/BPX_J.XPT" )
+
+```
+
+## Summary of Exercise 1
+
+In Exercise 1, an R Markdown report was created to organize the NHANES data analysis in a clear and reproducible format. The report includes a structured introduction, descriptions of the analysis steps, R code, and explanatory text. The project working directory and data folder were also verified, and the required NHANES demographic and blood pressure datasets were identified for subsequent analysis.
+
+
+<!--END OF THE EXCERCISE 1-->
+
+
+<!--START OF THE EXCERCISE 2-->
+ 
+# Exercise 2: Data Import and Preliminary exploration 
+
+## Use the `import()` Function from the `rio` Package
+
+The `rio` package was used to import the demographic and blood pressure examination datasets from the three NHANES survey cycles. The `import()` function reads the SAS Transport (`.XPT`) files into R, and meaningful object names were assigned based on the survey cycle and dataset type.
+
+The datasets imported in Exercise 1 were used for the preliminary exploration below.
+
+## Response to the Questions of Exercise 2
+
+### Q1: What are the dimensions of the datasets?
+
+The dimensions of each NHANES dataset were examined using the `dim()` function. The number of rows represents the observations, while the number of columns represents the variables.
+
+#### Demographic Datasets  
+The dimensions of the three NHANES demographic datasets were examined using the dim() function to determine the number of observations and variables in each survey cycle.
+
+```{r exercise_2_dimensions_demographics}
+
+# Display the dimensions of the 2013–2014 demographic dataset.
+dim(nhanes_demographics_2013_2014)
+
+# Display the dimensions of the 2015–2016 demographic dataset.
+dim(nhanes_demographics_2015_2016)
+
+# Display the dimensions of the 2017–2018 demographic dataset.
+dim(nhanes_demographics_2017_2018)
+
+```
+
+#### Blood Pressure Datasets  
+The dimensions of the three NHANES blood pressure datasets were examined using the dim() function to determine the number of observations and variables in each survey cycle
+
+```{r exercise_2_dimensions_blood_pressure}
+
+# Display the dimensions of the 2013–2014 blood pressure dataset.
+dim(nhanes_blood_pressure_2013_2014)
+
+# Display the dimensions of the 2015–2016 blood pressure dataset.
+dim(nhanes_blood_pressure_2015_2016)
+
+# Display the dimensions of the 2017–2018 blood pressure dataset.
+dim(nhanes_blood_pressure_2017_2018)
+
+```
+
+### Q2: What Types of Variables Are Present?
+
+The structure and variable types of the datasets were examined using the `str()` function. This function provides information about the number of observations, variables, and the data type of each variable.
+
+#### Demographic Datasets  
+The structure of the three NHANES demographic datasets was examined using the str() function to identify the variables and their data types in each survey cycle.
+
+```{r exercise_2_structure_demographics}
+
+# Examine the structure of the 2013–2014 demographic dataset.
+str(nhanes_demographics_2013_2014)
+
+# Examine the structure of the 2015–2016 demographic dataset.
+str(nhanes_demographics_2015_2016)
+
+# Examine the structure of the 2017–2018 demographic dataset.
+str(nhanes_demographics_2017_2018)
+
+```
+
+#### Blood Pressure Datasets  
+The structure of the three NHANES blood pressure datasets was examined using the str() function to identify the variables and their data types in each survey cycle.
+
+```{r exercise_2_structure_blood_pressure}
+
+# Examine the structure of the 2013–2014 blood pressure dataset.
+str(nhanes_blood_pressure_2013_2014)
+
+# Examine the structure of the 2015–2016 blood pressure dataset.
+str(nhanes_blood_pressure_2015_2016)
+
+# Examine the structure of the 2017–2018 blood pressure dataset.
+str(nhanes_blood_pressure_2017_2018)
+
+```
+
+### Q3: Are All Variables Stored in an Appropriate Format?
+
+The variable formats were reviewed using the `str()` function and the NHANES variable descriptions. Some categorical variables are represented using numeric or labelled codes in the original NHANES datasets. These formats can represent categorical information, but converting such variables to factors can make their categorical nature clearer when they are used in statistical analysis.
+
+Two examples are:
+
+- **`RIAGENDR` (Gender):** This variable represents gender categories and may be stored as numeric or labelled values. A factor would be more appropriate when the variable is treated as a categorical variable in statistical analysis.
+
+- **`DMDEDUC2` (Education):** This variable represents categories of educational attainment and may be stored as numeric or labelled values. A factor would be more appropriate when the variable is treated as a categorical variable in statistical analysis.
+
+These variables can be converted to factors during the data-cleaning stage when categorical labels and levels are required for analysis.
+
+## Summary of Exercise 2
+
+In Exercise 2, the six NHANES datasets from the 2013–2014, 2015–2016, and 2017–2018 survey cycles were examined following their import with the `rio` package. The `dim()` function was used to examine the number of observations and variables in each dataset, while the `str()` function was used to examine the dataset structure and variable types.
+
+The preliminary exploration showed that the datasets contain variables represented using different data types, including numeric and labelled values. Some coded categorical variables, such as gender and education, may be converted to factors during the data-cleaning stage to facilitate categorical analysis and interpretation.
+
+Overall, this preliminary exploration provided an understanding of the size, structure, and variable types of the six NHANES datasets and identified variables that may require further transformation during data cleaning.
+
+<!--END OF THE EXCERCISE 2-->
+
+<!--START OF THE EXCERCISE 3-->
+
+# Exercise 3: Merging and Preparing Datasets  
+
+## Prepare the Blood Pressure Datasets
+
+The blood pressure datasets from the three NHANES survey waves were prepared by selecting the variables required for the analysis. The participant identifier, examination status, and four systolic and four diastolic blood pressure measurements were retained.
+
+### Select Blood Pressure Variables for 2013–2014
+
+```{r select_blood_pressure_2013_2014}
+
+# Select the required blood pressure variables for 2013–2014.
+blood_pressure_2013_2014 <- nhanes_blood_pressure_2013_2014 %>%
+  select(
+    SEQN,
+    PEASCST1,
+    BPXSY1,
+    BPXDI1,
+    BPXSY2,
+    BPXDI2,
+    BPXSY3,
+    BPXDI3,
+    BPXSY4,
+    BPXDI4
+  )
+
+```
+
+### Select Blood Pressure Variables for 2015–2016
+
+```{r select_blood_pressure_2015_2016}
+
+# Select the required blood pressure variables for 2015–2016.
+blood_pressure_2015_2016 <- nhanes_blood_pressure_2015_2016 %>%
+  select(
+    SEQN,
+    BPXSY1,
+    BPXDI1,
+    BPXSY2,
+    BPXDI2,
+    BPXSY3,
+    BPXDI3,
+    BPXSY4,
+    BPXDI4
+  )
+
+```
+
+### Select Blood Pressure Variables for 2017–2018
+
+```{r select_blood_pressure_2017_2018}
+
+# Select the required blood pressure variables for 2017–2018.
+blood_pressure_2017_2018 <- nhanes_blood_pressure_2017_2018 %>%
+  select(
+    SEQN,
+    BPXSY1,
+    BPXDI1,
+    BPXSY2,
+    BPXDI2,
+    BPXSY3,
+    BPXDI3,
+    BPXSY4,
+    BPXDI4
+  )
+
+```
+
+## Prepare the Demographic Datasets
+
+The demographic datasets were prepared by selecting the variables required for the analysis. The participant identifier and selected demographic characteristics were retained.
+
+### Select Demographic Variables for 2013–2014
+
+```{r select_demographic_2013_2014}
+
+# Select the required demographic variables for 2013–2014.
+demographic_2013_2014 <- nhanes_demographics_2013_2014 %>%
+  select(
+    SEQN,
+    RIAGENDR,
+    RIDAGEYR,
+    RIDRETH1,
+    RIDRETH3,
+    DMDEDUC2,
+    DMDMARTL,
+    DMDFMSIZ,
+    INDFMIN2
+  )
+
+```
+
+### Select Demographic Variables for 2015–2016
+
+```{r select_demographic_2015_2016}
+
+# Select the required demographic variables for 2015–2016.
+demographic_2015_2016 <- nhanes_demographics_2015_2016 %>%
+  select(
+    SEQN,
+    RIAGENDR,
+    RIDAGEYR,
+    RIDRETH1,
+    RIDRETH3,
+    DMDEDUC2,
+    DMDMARTL,
+    DMDFMSIZ,
+    INDFMIN2
+  )
+
+```
+
+### Select Demographic Variables for 2017–2018
+
+```{r select_demographic_2017_2018}
+
+# Select the required demographic variables for 2017–2018.
+demographic_2017_2018 <- nhanes_demographics_2017_2018 %>%
+  select(
+    SEQN,
+    RIAGENDR,
+    RIDAGEYR,
+    RIDRETH1,
+    RIDRETH3,
+    DMDEDUC2,
+    DMDMARTL,
+    DMDFMSIZ,
+    INDFMIN2
+  )
+
+```
+
+## Combine Blood Pressure Datasets and Add `wave_id`
+
+The three blood pressure datasets were combined into a single dataset using `bind_rows()`. A `wave_id` variable was added to identify the NHANES survey cycle associated with each observation.
+
+### Add `wave_id` to the Blood Pressure Datasets
+
+```{r add_wave_id_blood_pressure}
+
+# Add the survey wave identifier to the 2013–2014 dataset.
+blood_pressure_2013_2014 <- blood_pressure_2013_2014 %>%
+  mutate(wave_id = "2013-2014")
+
+# Add the survey wave identifier to the 2015–2016 dataset.
+blood_pressure_2015_2016 <- blood_pressure_2015_2016 %>%
+  mutate(wave_id = "2015-2016")
+
+# Add the survey wave identifier to the 2017–2018 dataset.
+blood_pressure_2017_2018 <- blood_pressure_2017_2018 %>%
+  mutate(wave_id = "2017-2018")
+
+```
+
+### Combine the Blood Pressure Datasets
+
+```{r combine_blood_pressure}
+
+# Combine the three blood pressure datasets.
+blood_pressure_combined <- bind_rows(
+  blood_pressure_2013_2014,
+  blood_pressure_2015_2016,
+  blood_pressure_2017_2018
+)
+
+# Display the dimensions of the combined blood pressure dataset.
+dim(blood_pressure_combined)
+
+# Display the first observations.
+head(blood_pressure_combined)
+
+```
+
+The `wave_id` variable preserves the survey-cycle information after the three datasets are combined.
+
+## Combine Demographic Datasets and Add `wave_id`
+
+The same approach was used to prepare and combine the three demographic datasets.
+
+### Add `wave_id` to the Demographic Datasets
+
+```{r add_wave_id_demographic}
+
+# Add the survey wave identifier to the 2013–2014 dataset.
+demographic_2013_2014 <- demographic_2013_2014 %>%
+  mutate(wave_id = "2013-2014")
+
+# Add the survey wave identifier to the 2015–2016 dataset.
+demographic_2015_2016 <- demographic_2015_2016 %>%
+  mutate(wave_id = "2015-2016")
+
+# Add the survey wave identifier to the 2017–2018 dataset.
+demographic_2017_2018 <- demographic_2017_2018 %>%
+  mutate(wave_id = "2017-2018")
+
+```
+
+### Combine the Demographic Datasets
+
+```{r combine_demographic}
+
+# Combine the three demographic datasets.
+demographic_combined <- bind_rows(
+  demographic_2013_2014,
+  demographic_2015_2016,
+  demographic_2017_2018
+)
+
+# Display the dimensions of the combined demographic dataset.
+dim(demographic_combined)
+
+# Display the first observations.
+head(demographic_combined)
+
+```
+
+The three demographic datasets were combined into one dataset while preserving the survey-cycle information through `wave_id`.
+
+## Use a Join Function to Combine Blood Pressure and Demographic Datasets
+
+The combined demographic and blood pressure datasets were joined using the participant identifier `SEQN` and the survey-wave identifier `wave_id`.
+
+Using both variables ensures that demographic information is matched with blood pressure information from the same participant and the same NHANES survey cycle.
+
+```{r join_nhanes_datasets}
+
+# Join the demographic and blood pressure datasets.
+nhanes_merged <- demographic_combined %>%
+  left_join(
+    blood_pressure_combined,
+    by = c("SEQN", "wave_id")
+  )
+
+# Display the dimensions of the final merged dataset.
+dim(nhanes_merged)
+
+# Display the first observations.
+head(nhanes_merged)
+
+```
+
+A `left_join()` was used so that all demographic records are retained while matching blood pressure information is added when available.
+
+## Response to the Questions of Exercise 3
+
+### Q1. What Are the Dimensions of the Final Merged Dataset?
+
+The dimensions of the final merged dataset were examined using the `dim()`, `nrow()`, and `ncol()` functions.
+
+```{r exercise_3_q1}
+
+# Display the dimensions of the final merged dataset.
+dim(nhanes_merged)
+
+# Display the number of rows.
+nrow(nhanes_merged)
+
+# Display the number of columns.
+ncol(nhanes_merged)
+
+```
+
+The first value returned by `dim()` represents the number of observations, and the second value represents the number of variables.
+
+### Q2. How Do These Dimensions Compare with the Combined Datasets?
+
+The dimensions of the combined demographic dataset, combined blood pressure dataset, and final merged dataset were compared.
+
+```{r exercise_3_q2}
+
+# Display the dimensions of the combined demographic dataset.
+dim(demographic_combined)
+
+# Display the dimensions of the combined blood pressure dataset.
+dim(blood_pressure_combined)
+
+# Display the dimensions of the final merged dataset.
+dim(nhanes_merged)
+
+```
+
+Because a `left_join()` was used with `demographic_combined` as the left dataset, the final dataset retains the demographic observations. The columns from the blood pressure dataset are added to the demographic dataset when matching records are available.
+
+The final dataset generally contains more columns than either individual combined dataset because information from both datasets is brought together. The matching variables `SEQN` and `wave_id` are retained only once.
+
+### Q3. Explain the Results Clearly and Precisely
+
+The three demographic datasets were first combined vertically using `bind_rows()`. This created one demographic dataset containing observations from the 2013–2014, 2015–2016, and 2017–2018 NHANES survey waves. Similarly, the three blood pressure datasets were combined into one blood pressure dataset.
+
+The `wave_id` variable was added before combining the datasets so that each observation retained information about its original NHANES survey cycle.
+
+The combined demographic and blood pressure datasets were then joined using `SEQN` and `wave_id`. `SEQN` identifies the NHANES participant, while `wave_id` identifies the survey cycle. Using both variables ensures that demographic and blood pressure information are matched within the appropriate participant and survey wave.
+
+The final dataset contains demographic characteristics together with the corresponding blood pressure examination variables. Because a `left_join()` was used, all records from the combined demographic dataset are retained, while matching blood pressure information is added when available.
+
+## Summary of Exercise 3
+
+In Exercise 3, the demographic and blood pressure datasets from the three NHANES survey waves were prepared by selecting the variables required for analysis. The datasets from each survey wave were then combined separately using `bind_rows()`, and a `wave_id` variable was added to identify the survey cycle. Finally, the combined demographic and blood pressure datasets were joined using `SEQN` and `wave_id`. The resulting merged dataset contains demographic and blood pressure information in a single dataset and is ready for subsequent data cleaning and analysis.
+
+<!--END OF THE EXCERCISE 3-->
+
+<!--START OF THE EXCERCISE 4-->
+# Exercise 4: Data cleaning and variable recoding 
+
+## Review the Data Using the `skim()` Function
+
+The `skim()` function was used to review the overall structure, missing values, data types, and summary statistics of the merged dataset.
+
+### Load the `skimr` Package
+
+```{r load_skimr} 
+# Load the skimr package for reviewing the dataset.
+library(skimr)
+```
+
+### Review the Merged Dataset
+
+```{r review_merged_dataset}
+# Review the structure and summary information of the merged dataset.
+skim(nhanes_merged)
+```
+
+The `skim()` output was used to identify missing values, variable types, and the general structure of the merged dataset. Numeric variables were reviewed for their ranges and missing observations, while categorical variables were examined to determine whether their current format was appropriate for analysis.
+
+The review also helped identify variables that required recoding or conversion to more suitable data types before further analysis.
+
+## Clean Column Names
+
+The column names were standardized to make them consistent, readable, and easier to use in R. The `clean_names()` function from the `janitor` package was used to convert the column names to lowercase `snake_case` format.
+
+### Load the `janitor` Package
+
+```{r load_janitor}
+# Load the janitor package for cleaning column names.
+library(janitor)
+```
+
+### Standardize Column Names
+
+```{r clean_column_names}
+# Standardize all column names using snake_case.
+nhanes_merged <- nhanes_merged %>%
+  clean_names()
+```
+
+### Display the Cleaned Column Names
+
+```{r display_cleaned_names}
+# Display the cleaned column names.
+names(nhanes_merged)
+```
+
+The `clean_names()` function standardized the column names by removing problematic characters and converting names to lowercase `snake_case`. This makes the variables easier to reference in R code and improves consistency throughout the analysis.
+
+For example, NHANES variables such as `SEQN`, `RIAGENDR`, and `RIDAGEYR` become `seqn`, `riagendr`, and `ridageyr`.
+
+## Rename Variables
+
+The selected variables were renamed to descriptive names to make the dataset easier to understand and use in subsequent analyses.
+
+```{r rename_variables}
+# Rename selected variables using descriptive names.
+nhanes_merged <- nhanes_merged %>%
+  rename(
+    participant_id = seqn,
+    gender = riagendr,
+    age_years = ridageyr,
+    race_ethnicity_1 = ridreth1,
+    race_ethnicity_3 = ridreth3,
+    education = dmdeduc2,
+    marital_status = dmdmartl,
+    family_size = dmdfmsiz,
+    family_income = indfmin2,
+    systolic_bp_1 = bpxsy1,
+    diastolic_bp_1 = bpxdi1,
+    systolic_bp_2 = bpxsy2,
+    diastolic_bp_2 = bpxdi2,
+    systolic_bp_3 = bpxsy3,
+    diastolic_bp_3 = bpxdi3,
+    systolic_bp_4 = bpxsy4,
+    diastolic_bp_4 = bpxdi4
+  )
+```
+
+The selected NHANES variables were renamed using descriptive names to improve readability and make the variables easier to interpret during subsequent analysis.
+
+## Recode Variables to Appropriate Data Types
+
+Categorical variables were converted to factors, while `family_size` was converted to an integer variable.
+
+```{r recode_variables}
+# Convert categorical variables to factors and family size to integer.
+nhanes_merged <- nhanes_merged %>%
+  mutate(
+    gender = factor(gender),
+    race_ethnicity_1 = factor(race_ethnicity_1),
+    race_ethnicity_3 = factor(race_ethnicity_3),
+    education = factor(education),
+    marital_status = factor(marital_status),
+    family_size = as.integer(family_size)
+  )
+```
+
+Converting categorical variables to factors makes their categorical nature explicit in R and prepares them for descriptive and statistical analyses. The `family_size` variable was converted to an integer because it represents a count of family members.
+
+## Check the Data Types After Recoding
+
+The structure of the cleaned dataset was reviewed to verify that the variables were converted as intended.
+
+```{r check_recode}
+# Review the structure of the cleaned dataset.
+str(nhanes_merged)
+```
+
+## Remove Duplicate Observations
+
+Duplicate observations were checked using both the participant identifier and the survey wave identifier. This is important because the dataset contains observations from multiple NHANES survey cycles.
+
+### Count Duplicate Participant-Wave Combinations
+
+```{r check_duplicates_before}
+# Count duplicated participant and survey wave combinations.
+sum(duplicated(nhanes_merged[c("participant_id", "wave_id")]))
+```
+
+### Remove Duplicate Participant-Wave Combinations
+
+```{r remove_duplicates}
+# Remove duplicate observations based on participant ID and survey wave.
+nhanes_merged <- nhanes_merged %>%
+  distinct(participant_id, wave_id, .keep_all = TRUE)
+```
+
+### Verify Duplicate Removal
+
+```{r check_duplicates_after}
+# Verify that no duplicate participant-wave combinations remain.
+sum(duplicated(nhanes_merged[c("participant_id", "wave_id")]))
+```
+
+The `distinct()` function was used to retain one observation for each participant and survey wave combination. The number of duplicated combinations was checked before and after the cleaning step to verify that the duplicate removal was successful.
+
+Using both `participant_id` and `wave_id` is appropriate because the merged dataset contains multiple NHANES survey cycles. A participant identifier alone should not be assumed to represent a unique observation across the entire combined dataset.
+
+## Review the Cleaned Dataset
+
+The cleaned dataset was reviewed to confirm that the previous cleaning and recoding steps were successfully applied.
+
+```{r review_cleaned_dataset}
+# Display the dimensions of the cleaned dataset.
+dim(nhanes_merged)
+
+# Display the first observations of the cleaned dataset.
+head(nhanes_merged)
+
+# Display the final variable names.
+names(nhanes_merged)
+```
+
+## Summary of Exercise 4
+
+The merged NHANES dataset was reviewed and cleaned to prepare it for further analysis. The `skim()` function was used to examine the overall structure of the dataset, including observations, variables, missing values, data types, and summary statistics. The column names were standardized using the `clean_names()` function to create consistent lowercase `snake_case` names. Selected variables were then renamed using descriptive names, and categorical variables were converted to factors. Finally, duplicate observations were identified using the combination of `participant_id` and `wave_id` and removed using the `distinct()` function. These steps improved the consistency and organization of the dataset and prepared it for subsequent data transformation and analysis.
+
+<!--END OF THE EXCERCISE 4-->
+
+<!--START OF THEEXCERCISE 5-->
+
+# Exercise 5: Filtering and Reshaping a Dataset
+
+## Filter Adult Participants Aged 21 Years and Older
+
+The `filter()` function was used to select participants who were 21 years of age or older and had a valid age measurement.
+
+```{r filter_adult_participants}
+# Filter the dataset to include participants aged 21 years and older.
+nhanes_adults <- nhanes_merged %>%
+  filter(
+    !is.na(age_years),
+    age_years >= 21
+  )
+```
+
+The resulting dataset contains participants who were 21 years of age or older. Participants with missing age information were excluded because their eligibility could not be determined.
+
+### Examine the Filtered Dataset
+
+```{r examine_adult_dataset}
+# Display the first observations of the filtered dataset.
+head(nhanes_adults)
+
+# Display the number of observations after filtering.
+nrow(nhanes_adults)
+```
+
+The number of observations after filtering was examined to verify that the adult participant selection was applied successfully.
+
+## Select the Required Variables
+
+Only the variables required for the blood pressure analysis were retained. These variables include the participant ID, survey wave, age, gender, and the four systolic and four diastolic blood pressure measurements.
+
+```{r select_adult_variables}
+# Keep only the variables required for the blood pressure analysis.
+nhanes_adults <- nhanes_adults %>%
+  select(
+    participant_id,
+    wave_id,
+    age_years,
+    gender,
+    systolic_bp_1,
+    diastolic_bp_1,
+    systolic_bp_2,
+    diastolic_bp_2,
+    systolic_bp_3,
+    diastolic_bp_3,
+    systolic_bp_4,
+    diastolic_bp_4
+  )
+```
+
+The dataset was reduced to the variables relevant to the analysis. The `wave_id` variable was retained to identify the NHANES survey cycle for each participant.
+
+### Examine the Selected Dataset
+
+```{r examine_selected_variables}
+# Display the structure of the selected dataset.
+str(nhanes_adults)
+```
+
+The `str()` function was used to verify the variables and their data types after selecting the required columns.
+
+## Reshape the Dataset Using `pivot_longer()`
+
+The blood pressure measurements were originally stored in **wide format**, with separate columns for each measurement occasion.
+
+For example:
+
+* `systolic_bp_1`
+* `systolic_bp_2`
+* `systolic_bp_3`
+* `systolic_bp_4`
+* `diastolic_bp_1`
+* `diastolic_bp_2`
+* `diastolic_bp_3`
+* `diastolic_bp_4`
+
+The `pivot_longer()` function from the `tidyr` package was used to convert the blood pressure measurements from wide format to long format.
+
+```{r reshape_blood_pressure}
+# Reshape the blood pressure measurements from wide format to long format.
+nhanes_adults_long <- nhanes_adults %>%
+  pivot_longer(
+    cols = c(
+      systolic_bp_1,
+      systolic_bp_2,
+      systolic_bp_3,
+      systolic_bp_4,
+      diastolic_bp_1,
+      diastolic_bp_2,
+      diastolic_bp_3,
+      diastolic_bp_4
+    ),
+    names_to = c("measurement_type", "measurement_number"),
+    names_pattern = "(systolic_bp|diastolic_bp)_(\\d+)",
+    values_to = "blood_pressure_value"
+  ) %>%
+  mutate(
+    measurement_number = as.integer(measurement_number)
+  )
+```
+
+### Examine the Long-Format Dataset
+
+```{r examine_long_dataset}
+# Display the first observations of the long-format dataset.
+head(nhanes_adults_long)
+```
+
+After reshaping, the blood pressure measurements are represented by three new variables:
+
+* `measurement_type` identifies whether the measurement is systolic or diastolic blood pressure.
+* `measurement_number` identifies the measurement number from 1 to 4.
+* `blood_pressure_value` contains the corresponding blood pressure measurement.
+
+The participant ID, survey wave, age, and gender remain associated with each blood pressure measurement.
+
+## Review the Reshaped Dataset
+
+The structure and dimensions of the reshaped dataset were examined to verify that the transformation was successful.
+
+### Examine the Structure
+
+```{r review_long_structure}
+# Examine the structure of the long-format dataset.
+str(nhanes_adults_long)
+```
+
+### Examine the Dimensions
+
+```{r review_long_dimensions}
+# Display the dimensions of the long-format dataset.
+dim(nhanes_adults_long)
+```
+
+### Display the First Observations
+
+```{r review_long_head}
+# Display the first observations of the long-format dataset.
+head(nhanes_adults_long)
+```
+
+The reshaped dataset contains multiple rows for each participant because the blood pressure measurements that were previously stored in separate columns have been converted into rows.
+
+## Check the Blood Pressure Measurements
+
+The distribution of measurement types and measurement numbers was checked after reshaping.
+
+### Check Measurement Types
+
+```{r check_measurement_types}
+# Check the types of blood pressure measurements.
+table(nhanes_adults_long$measurement_type)
+```
+
+### Check Measurement Numbers
+
+```{r check_measurement_numbers}
+# Check the blood pressure measurement numbers.
+table(nhanes_adults_long$measurement_number)
+```
+
+### Check Missing Blood Pressure Values
+
+```{r check_missing_bp}
+# Count missing blood pressure values.
+sum(is.na(nhanes_adults_long$blood_pressure_value))
+```
+
+These checks were used to confirm that the systolic and diastolic blood pressure measurements were correctly converted to long format and to identify missing blood pressure observations.
+
+## Summary of Exercise 5
+
+In this exercise, the merged NHANES dataset was filtered to include participants aged 21 years and older with valid age measurements. The dataset was then reduced to the participant ID, survey wave, age, gender, and four systolic and four diastolic blood pressure measurements. Finally, the `pivot_longer()` function was used to convert the blood pressure measurements from wide format to long format. The resulting dataset contains one blood pressure value per row, together with the corresponding measurement type and measurement number. The `wave_id` variable was retained to identify the NHANES survey cycle for each participant. This long-format structure is useful for subsequent descriptive and statistical analyses of blood pressure measurements.
+
+<!--END OF THE EXCERCISE 5-->
