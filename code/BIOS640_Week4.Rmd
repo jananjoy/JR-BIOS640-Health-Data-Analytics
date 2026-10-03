@@ -1,1 +1,1372 @@
+---
+title: "BIOS640 Week 4 Summary"
+author: "Jananjoy Rajkumar"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    number_sections: true
+geometry: margin=1in
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+
+library(tidyverse)
+library(cowplot)
+library(ggpubr)
+library(here)
+
+nhanes_data <- read_csv(
+  here("data", "cleaned_NHANES.csv"),
+  show_col_types = FALSE
+)
+
+```
+
+# Exercise 1: Reproducing and Arranging ggplot2 Figures
+
+## Load Required Packages
+
+The required packages were loaded in the global setup chunk.
+
+## Import the Cleaned NHANES Dataset
+
+```{r ex1-import-data}
+nhanes_data <- read_csv(
+  here("data", "cleaned_NHANES.csv"),
+  show_col_types = FALSE
+)
+```
+
+## Check Column Names
+
+```{r ex1-column-names}
+print(names(nhanes_data))
+```
+
+## Find Meaningful Cleaned Variables
+
+### Age
+
+```{r ex1-age-variables}
+age_candidates <- names(nhanes_data)[
+  grepl(
+    "age",
+    names(nhanes_data),
+    ignore.case = TRUE
+  )
+]
+
+cat("Age variables found:\n")
+print(age_candidates)
+```
+
+### Gender
+
+```{r ex1-gender-variables}
+gender_candidates <- names(nhanes_data)[
+  grepl(
+    "gender|sex",
+    names(nhanes_data),
+    ignore.case = TRUE
+  )
+]
+
+cat("Gender variables found:\n")
+print(gender_candidates)
+```
+
+### Ethnicity
+
+```{r ex1-ethnicity-variables}
+ethnicity_candidates <- names(nhanes_data)[
+  grepl(
+    "ethnic|race|reth",
+    names(nhanes_data),
+    ignore.case = TRUE
+  )
+]
+
+cat("Ethnicity variables foun\n")
+print(ethnicity_candidates)
+```
+
+## Select the Variables
+
+```{r ex1-select-variables}
+
+age_variable <- "age"
+
+gender_variable <- "gender"
+
+ethnicity_variable <- "ethnicity_1"
+
+cat("Selected variables:\n")
+cat("Age:", age_variable, "\n")
+cat("Gender:", gender_variable, "\n")
+cat("Ethnicity:", ethnicity_variable, "\n")
+```
+
+## Create Figure 1: Age Distribution by Gender
+
+```{r ex1-figure-1, fig.width=9, fig.height=6}
+figure_1 <- ggplot(
+  nhanes_data,
+  aes(
+    x = .data[[age_variable]],
+    fill = .data[[gender_variable]]
+  )
+) +
+  geom_histogram(
+    binwidth = 5,
+    boundary = 0,
+    color = "black",
+    na.rm = TRUE
+  ) +
+  labs(
+    title = "Age Distribution by Gender",
+    x = "Age (years)",
+    y = "Number of Participants",
+    fill = "Gender"
+  ) +
+  theme_classic()
+
+print(figure_1)
+```
+
+### Save Figure 1
+
+```{r ex1-save-figure-1}
+ggsave(
+  "exercise1_figure1_age_gender.png",
+  plot = figure_1,
+  width = 9,
+  height = 6,
+  dpi = 300
+)
+```
+
+## Create Figure 2: Distribution of Ethnicity
+
+```{r ex1-figure-2, fig.width=9, fig.height=6}
+figure_2 <- ggplot(
+  nhanes_data,
+  aes(
+    x = .data[[ethnicity_variable]],
+    fill = .data[[ethnicity_variable]]
+  )
+) +
+  geom_bar(
+    aes(
+      y = after_stat(count / sum(count))
+    ),
+    na.rm = TRUE
+  ) +
+  scale_y_continuous(
+    labels = scales::percent
+  ) +
+  labs(
+    title = "Distribution of Ethnicity",
+    x = "Ethnicity",
+    y = "Proportion",
+    fill = "Ethnicity"
+  ) +
+  theme_classic()
+
+print(figure_2)
+```
+
+### Save Figure 2
+
+```{r ex1-save-figure-2}
+ggsave(
+  "exercise1_figure2_ethnicity.png",
+  plot = figure_2,
+  width = 9,
+  height = 6,
+  dpi = 300
+)
+```
+
+## Combine the Figures Using Cowplot
+
+```{r ex1-cowplot, fig.width=9, fig.height=12}
+plot_grid_output <- cowplot::plot_grid(
+  figure_1,
+  figure_2,
+  ncol = 1,
+  nrow = 2,
+  labels = c("A", "B"),
+  align = "v"
+)
+
+print(plot_grid_output)
+```
+
+### Save the Cowplot Figure
+
+```{r ex1-save-cowplot}
+ggsave(
+  "exercise1_cowplot.png",
+  plot = plot_grid_output,
+  width = 9,
+  height = 12,
+  dpi = 300
+)
+```
+
+## Combine the Figures Using ggpubr
+
+```{r ex1-ggpubr, fig.width=9, fig.height=12}
+ggarrange_output <- ggpubr::ggarrange(
+  figure_1,
+  figure_2,
+  ncol = 1,
+  nrow = 2,
+  labels = c("A", "B"),
+  align = "v"
+)
+
+print(ggarrange_output)
+```
+
+### Save the ggpubr Figure
+
+```{r ex1-save-ggpubr}
+ggsave(
+  "exercise1_ggarrange.png",
+  plot = ggarrange_output,
+  width = 9,
+  height = 12,
+  dpi = 300
+)
+```
+### Comparison of `plot_grid()` and `ggarrange()`
+
+Both `plot_grid()` from **cowplot** and `ggarrange()` from **ggpubr** successfully combine multiple ggplot2 figures into a single vertical layout. In this analysis, both methods arrange the age-by-gender and ethnicity figures in two rows and add labels to identify the plots. `plot_grid()` provides direct control over alignment and spacing, while `ggarrange()` provides a convenient interface for arranging multiple plots and supports additional annotation options. Both methods produce a clear and consistent layout. The `ggarrange()` approach is convenient for this report because it provides a simple syntax for arranging the figures vertically while maintaining consistent alignment and plot labels.
+
+
+# Exercise 2: Visualizing Key Characteristics
+
+This exercise examines the distributions of age, gender, and ethnicity in the cleaned NHANES dataset.
+
+## Import the Cleaned NHANES Dataset
+
+```{r ex2-import-data}
+nhanes_data <- read_csv(
+  here("data", "cleaned_NHANES.csv"),
+  show_col_types = FALSE
+)
+```
+
+## View Variable Names
+
+```{r ex2-variable-names}
+names(nhanes_data)
+```
+
+## Identify Age, Gender, and Ethnicity Variables
+
+### Age
+
+The cleaned NHANES dataset contains the meaningful age variable `age`.
+
+```{r ex2-identify-age}
+age_variables <- names(nhanes_data)[
+  grepl(
+    "age",
+    names(nhanes_data),
+    ignore.case = TRUE
+  )
+]
+
+print(age_variables)
+```
+
+### Gender
+
+The cleaned NHANES dataset contains the meaningful gender variable `gender`.
+
+```{r ex2-identify-gender}
+gender_variables <- names(nhanes_data)[
+  grepl(
+    "gender|sex",
+    names(nhanes_data),
+    ignore.case = TRUE
+  )
+]
+
+print(gender_variables)
+```
+
+### Ethnicity
+
+The cleaned NHANES dataset contains two ethnicity-related variables, `ethnicity_1` and `ethnicity_2`.
+
+```{r ex2-identify-ethnicity}
+ethnicity_variables <- names(nhanes_data)[
+  grepl(
+    "ethnicity",
+    names(nhanes_data),
+    ignore.case = TRUE
+  )
+]
+
+print(ethnicity_variables)
+```
+
+## Select Variables
+
+The meaningful cleaned variable names are selected explicitly to ensure that the intended variables are used throughout the analysis.
+
+```{r ex2-select-variables}
+age_variable <- "age"
+
+gender_variable <- "gender"
+
+ethnicity_variable_1 <- "ethnicity_1"
+
+ethnicity_variable_2 <- "ethnicity_2"
+
+print(age_variable)
+print(gender_variable)
+print(ethnicity_variable_1)
+print(ethnicity_variable_2)
+```
+
+## Examine Missing Values
+
+```{r ex2-missing-values}
+missing_age <- sum(
+  is.na(nhanes_data[[age_variable]])
+)
+
+missing_gender <- sum(
+  is.na(nhanes_data[[gender_variable]])
+)
+
+missing_ethnicity_1 <- sum(
+  is.na(nhanes_data[[ethnicity_variable_1]])
+)
+
+missing_ethnicity_2 <- sum(
+  is.na(nhanes_data[[ethnicity_variable_2]])
+)
+
+cat(
+  "Missing Age:",
+  missing_age,
+  "\n"
+)
+
+cat(
+  "Missing Gender:",
+  missing_gender,
+  "\n"
+)
+
+cat(
+  "Missing Ethnicity 1:",
+  missing_ethnicity_1,
+  "\n"
+)
+
+cat(
+  "Missing Ethnicity 2:",
+  missing_ethnicity_2,
+  "\n"
+)
+```
+The age distribution shows participants across a broad range of ages, with the histogram displaying the number of participants within five-year age intervals. There are `r missing_age` missing age values in the cleaned dataset.
+
+The gender distribution shows the number of participants in each gender category. The frequency table and bar plot allow the relative sizes of the gender groups to be compared. There are `r missing_gender` missing gender values.
+
+The ethnicity distributions show the frequency of participants across the categories recorded in `ethnicity_1` and `ethnicity_2`. The frequency tables and bar plots allow the categories and their participant counts to be compared. `r ethnicity_variable_1` contains `r missing_ethnicity_1` missing values, while `r ethnicity_variable_2` contains `r missing_ethnicity_2` missing values.
+
+Overall, both ethnicity variables provide complete information because neither variable contains missing values. Their categories and frequency distributions were compared to determine which variable was more appropriate for the subsequent analysis.
+
+## Descriptive Summary of Age
+
+```{r ex2-age-summary}
+summary(
+  nhanes_data[[age_variable]]
+)
+```
+
+## Descriptive Summary of Gender
+
+```{r ex2-gender-summary}
+table(
+  nhanes_data[[gender_variable]],
+  useNA = "ifany"
+)
+```
+
+## Descriptive Summary of Ethnicity Variable 1
+
+```{r ex2-ethnicity-summary-1}
+table(
+  nhanes_data[[ethnicity_variable_1]],
+  useNA = "ifany"
+)
+```
+
+## Descriptive Summary of Ethnicity Variable 2
+
+```{r ex2-ethnicity-summary-2}
+table(
+  nhanes_data[[ethnicity_variable_2]],
+  useNA = "ifany"
+)
+```
+
+## Figure: Distribution of Age
+
+```{r ex2-figure-age, fig.width=8, fig.height=6}
+figure_age <- ggplot(
+  nhanes_data,
+  aes(
+    x = .data[[age_variable]]
+  )
+) +
+  geom_histogram(
+    binwidth = 5,
+    boundary = 0,
+    color = "black",
+    na.rm = TRUE
+  ) +
+  labs(
+    title = "Distribution of Age",
+    x = "Age (years)",
+    y = "Number of Participants"
+  ) +
+  theme_minimal()
+
+print(figure_age)
+```
+
+```{r ex2-save-age-figure}
+ggsave(
+  "age_distribution.png",
+  plot = figure_age,
+  width = 8,
+  height = 6,
+  dpi = 300
+)
+```
+
+## Figure: Distribution of Gender
+
+```{r ex2-figure-gender, fig.width=8, fig.height=6}
+figure_gender <- ggplot(
+  nhanes_data,
+  aes(
+    x = .data[[gender_variable]],
+    fill = .data[[gender_variable]]
+  )
+) +
+  geom_bar(
+    na.rm = TRUE
+  ) +
+  labs(
+    title = "Distribution of Gender",
+    x = "Gender",
+    y = "Number of Participants",
+    fill = "Gender"
+  ) +
+  theme_minimal()
+
+print(figure_gender)
+```
+
+```{r ex2-save-gender-figure}
+ggsave(
+  "gender_distribution.png",
+  plot = figure_gender,
+  width = 8,
+  height = 6,
+  dpi = 300
+)
+```
+
+## Figure: Ethnicity Variable 1
+
+```{r ex2-figure-ethnicity-1, fig.width=9, fig.height=6}
+figure_ethnicity_1 <- ggplot(
+  nhanes_data,
+  aes(
+    x = .data[[ethnicity_variable_1]],
+    fill = .data[[ethnicity_variable_1]]
+  )
+) +
+  geom_bar(
+    na.rm = TRUE
+  ) +
+  labs(
+    title = paste(
+      "Distribution of",
+      ethnicity_variable_1
+    ),
+    x = "Ethnicity",
+    y = "Number of Participants",
+    fill = "Ethnicity"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1
+    )
+  )
+
+print(figure_ethnicity_1)
+```
+
+```{r ex2-save-ethnicity-1}
+ggsave(
+  "ethnicity_1_distribution.png",
+  plot = figure_ethnicity_1,
+  width = 9,
+  height = 6,
+  dpi = 300
+)
+```
+
+## Figure: Ethnicity Variable 2
+
+```{r ex2-figure-ethnicity-2, fig.width=9, fig.height=6}
+figure_ethnicity_2 <- ggplot(
+  nhanes_data,
+  aes(
+    x = .data[[ethnicity_variable_2]],
+    fill = .data[[ethnicity_variable_2]]
+  )
+) +
+  geom_bar(
+    na.rm = TRUE
+  ) +
+  labs(
+    title = paste(
+      "Distribution of",
+      ethnicity_variable_2
+    ),
+    x = "Ethnicity",
+    y = "Number of Participants",
+    fill = "Ethnicity"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1
+    )
+  )
+
+print(figure_ethnicity_2)
+```
+
+```{r ex2-save-ethnicity-2}
+ggsave(
+  "ethnicity_2_distribution.png",
+  plot = figure_ethnicity_2,
+  width = 9,
+  height = 6,
+  dpi = 300
+)
+```
+
+## Compare Ethnicity Variables
+
+```{r ex2-compare-ethnicity-1}
+print(
+  table(
+    nhanes_data[[ethnicity_variable_1]],
+    useNA = "ifany"
+  )
+)
+```
+
+```{r ex2-compare-ethnicity-2}
+print(
+  table(
+    nhanes_data[[ethnicity_variable_2]],
+    useNA = "ifany"
+  )
+)
+```
+
+```{r ex2-ethnicity-comparison}
+ethnicity_comparison <- tibble(
+  variable = c(
+    ethnicity_variable_1,
+    ethnicity_variable_2
+  ),
+  number_of_participants = c(
+    sum(!is.na(nhanes_data[[ethnicity_variable_1]])),
+    sum(!is.na(nhanes_data[[ethnicity_variable_2]]))
+  ),
+  number_of_categories = c(
+    n_distinct(
+      nhanes_data[[ethnicity_variable_1]],
+      na.rm = TRUE
+    ),
+    n_distinct(
+      nhanes_data[[ethnicity_variable_2]],
+      na.rm = TRUE
+    )
+  ),
+  missing_values = c(
+    missing_ethnicity_1,
+    missing_ethnicity_2
+  )
+)
+
+print(ethnicity_comparison)
+```
+
+
+
+
+The two ethnicity variables were compared based on their categories, frequency distributions, and missing values. Both `ethnicity_1` and `ethnicity_2` contain complete information with no missing values. `ethnicity_1` was retained because its categories provide the ethnicity classification used for the analysis and correspond to the categories required for the visualization. `ethnicity_2` was removed because it provides an additional ethnicity variable that is not needed for the subsequent analysis. This reduces unnecessary duplication while preserving the required ethnicity information in the cleaned dataset.
+
+
+## Select the Ethnicity Variable to Keep
+
+```{r ex2-select-ethnicity}
+ethnicity_variable_to_keep <- ethnicity_variable_1
+
+ethnicity_variable_to_remove <- ethnicity_variable_2
+
+cat(
+  "Ethnicity variable kept:",
+  ethnicity_variable_to_keep,
+  "\n"
+)
+
+cat(
+  "Ethnicity variable removed:",
+  ethnicity_variable_to_remove,
+  "\n"
+)
+```
+
+`r ethnicity_variable_to_keep` was retained because it provides the ethnicity information selected for subsequent analysis. `r ethnicity_variable_to_remove` was removed because retaining both ethnicity variables would provide redundant information for the purposes of this analysis.
+
+## Remove the Selected Ethnicity Variable
+
+```{r ex2-remove-ethnicity}
+nhanes_data <- nhanes_data %>%
+  select(
+    -all_of(ethnicity_variable_to_remove)
+  )
+```
+
+## Confirm Removal
+
+```{r ex2-confirm-removal}
+names(nhanes_data)
+```
+
+## Save Final Dataset
+
+```{r ex2-save-final-data}
+write_csv(
+  nhanes_data,
+  "cleaned_NHANES_exercise2.csv"
+)
+```
+
+# Exercise 3: Improving ggplot Figure
+
+The purpose of this exercise is to evaluate how participants' body weight changed over a four-month diet study. The figure should show each participant's weight change over time relative to their baseline weight at week 0.
+
+## Load Required Packages
+
+```{r ex3-load-packages, message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+## Import the Diet Dataset
+
+```{r ex3-import-data, message=FALSE, warning=FALSE}
+diet_data <- read_csv(
+  here("data", "diet.csv"),
+  show_col_types = FALSE
+)
+```
+
+## Check the Data
+
+```{r ex3-check-data}
+print(diet_data)
+
+print(names(diet_data))
+
+glimpse(diet_data)
+```
+
+## Check Summary Information
+
+```{r ex3-summary}
+summary(diet_data)
+```
+
+## Identify the Variables
+
+The participant identifier, week/time variable, and weight variable are identified using their variable names.
+
+```{r ex3-identify-variables}
+id_variables <- names(diet_data)[
+  grepl(
+    "id|participant|subject",
+    names(diet_data),
+    ignore.case = TRUE
+  )
+]
+
+week_variables <- names(diet_data)[
+  grepl(
+    "week|time",
+    names(diet_data),
+    ignore.case = TRUE
+  )
+]
+
+weight_variables <- names(diet_data)[
+  grepl(
+    "weight|wt",
+    names(diet_data),
+    ignore.case = TRUE
+  )
+]
+
+print(id_variables)
+print(week_variables)
+print(weight_variables)
+```
+
+## Select the Variables
+
+```{r ex3-select-variables}
+participant_id <- id_variables[1]
+
+week_variable <- week_variables[1]
+
+weight_variable <- weight_variables[1]
+
+print(participant_id)
+print(week_variable)
+print(weight_variable)
+```
+
+## Calculate Baseline Weight
+
+Baseline weight is defined as the participant's weight at **week 0**.
+
+```{r ex3-baseline-weight}
+diet_data <- diet_data %>%
+  group_by(
+    .data[[participant_id]]
+  ) %>%
+  mutate(
+    baseline_weight = .data[[weight_variable]][
+      .data[[week_variable]] == 0
+    ][1]
+  ) %>%
+  ungroup()
+```
+
+## Calculate Weight Change From Baseline
+
+Weight change is calculated by subtracting the baseline weight from the participant's weight at each week.
+
+A negative value represents weight loss, while a positive value represents weight gain.
+
+```{r ex3-weight-change}
+diet_data <- diet_data %>%
+  mutate(
+    weight_change = .data[[weight_variable]] -
+      baseline_weight
+  )
+```
+
+## Check the Calculations
+
+```{r ex3-check-calculations}
+print(diet_data)
+```
+
+## Critique of the Original Figure
+
+The original figure has several limitations that make it difficult to understand how participants' weights changed over time. First, the figure appears to display participants' **absolute body weights** rather than their change from baseline. Because participants likely started the study at different body weights, it is difficult to compare the amount of weight gained or lost between participants.
+
+Second, the original figure contains many overlapping lines and does not clearly identify the meaning of the individual trajectories. This makes the figure visually crowded and difficult to interpret. The figure also does not provide a clear reference line for zero change from baseline. As a result, it is not immediately obvious whether a participant gained or lost weight relative to week 0.
+
+The improved figure will therefore display **change in weight from baseline** on the y-axis rather than absolute weight. Week 0 will correspond to a change of zero for every participant. Each participant will be represented by a separate line, allowing their individual trajectories to be followed over time. Points will also be added to show the individual measurements.
+
+A horizontal reference line at zero will make it easier to distinguish weight loss from weight gain. Clear axis labels, a descriptive title, and a subtitle explaining that each line represents one participant will further improve readability and interpretation.
+
+## Create the Improved Figure
+
+```{r ex3-create-plot, fig.width=9, fig.height=6}
+weight_change_plot <- ggplot(
+  diet_data,
+  aes(
+    x = .data[[week_variable]],
+    y = weight_change,
+    group = .data[[participant_id]]
+  )
+) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed"
+  ) +
+  geom_line(
+    alpha = 0.6
+  ) +
+  geom_point(
+    size = 2
+  ) +
+  labs(
+    title = "Change in Body Weight From Baseline",
+    subtitle = "Each line represents one participant",
+    x = "Week",
+    y = "Change in Weight From Week 0"
+  ) +
+  theme_minimal()
+```
+
+## Display the Improved Figure
+
+```{r ex3-display-plot}
+print(weight_change_plot)
+```
+
+## Save the Figure
+
+```{r ex3-save-plot}
+ggsave(
+  here("figures", "diet_weight_change.png"), 
+  plot = weight_change_plot,
+  width = 9,
+  height = 6,
+  dpi = 300
+)
+```
+
+## Interpretation
+
+The improved figure allows each participant's trajectory to be compared relative to their own baseline weight. At week 0, all participants have a weight change of zero, providing a common reference point for comparison. Values below zero indicate weight loss relative to baseline, whereas values above zero indicate weight gain.
+
+The individual lines show how each participant's weight changed over the four-month study period. The figure also makes it possible to compare the magnitude and direction of weight changes among participants and to identify different patterns of weight change over time.
+
+# Exercise 4: Exploring Relationships Through Visualizations
+
+The final analysis examines the relationships among age, gender, systolic blood pressure (SBP), and hypertension categories using the cleaned NHANES dataset. Average SBP was calculated from four available measurements, participants with missing age, gender, or average SBP were excluded from the final analytical sample, and the remaining participants were grouped into SBP and age categories.
+
+## Preparing the NHANES Data
+
+The cleaned NHANES dataset was imported and the relevant variables were identified.
+
+```{r ex4-import-data, message=FALSE, warning=FALSE}
+nhanes_data <- read_csv(
+  here("data", "cleaned_NHANES.csv"),  
+  show_col_types = FALSE
+)
+```
+
+The dataset contains the variables required for the analysis, including age, gender, and four systolic blood pressure measurements.
+
+```{r ex4-identify-variables}
+age_variable <- names(nhanes_data)[
+  grepl(
+    "^age$|age_years|age",
+    names(nhanes_data),
+    ignore.case = TRUE
+  )
+][1]
+
+gender_variable <- names(nhanes_data)[
+  grepl(
+    "^gender$|^sex$|gender|sex",
+    names(nhanes_data),
+    ignore.case = TRUE
+  )
+][1]
+
+sbp_variables <- names(nhanes_data)[
+  grepl(
+    "sbp|systolic|bpxsy",
+    names(nhanes_data),
+    ignore.case = TRUE
+  )
+]
+
+sbp_readings <- sbp_variables[
+  grepl(
+    "[1-4]$|_[1-4]$|[1-4]_",
+    sbp_variables
+  )
+]
+
+cat("Age variable:", age_variable, "\n")
+cat("Gender variable:", gender_variable, "\n")
+cat("SBP variables:\n")
+print(sbp_readings)
+```
+
+Four systolic blood pressure measurements were identified for each participant.
+
+## Average Systolic Blood Pressure
+
+Average SBP was calculated from the available measurements. Missing readings were ignored when calculating the mean. When all four readings were missing, the average SBP was set to `NA`.
+
+```{r ex4-calculate-average-sbp}
+if (length(sbp_readings) != 4) {
+  
+  stop(
+    paste(
+      "Exactly four SBP readings were not identified.",
+      "Check the SBP variable names."
+    )
+  )
+}
+
+nhanes_data <- nhanes_data %>%
+  mutate(
+    average_sbp = rowMeans(
+      select(
+        .,
+        all_of(sbp_readings)
+      ),
+      na.rm = TRUE
+    ),
+    
+    number_sbp_readings = rowSums(
+      !is.na(
+        select(
+          .,
+          all_of(sbp_readings)
+        )
+      )
+    ),
+    
+    average_sbp = if_else(
+      number_sbp_readings == 0,
+      NA_real_,
+      average_sbp
+    )
+  ) %>%
+  select(
+    -number_sbp_readings
+  )
+```
+
+The number of participants with missing average SBP was also examined.
+
+```{r ex4-check-sbp}
+missing_average_sbp <- sum(
+  is.na(nhanes_data$average_sbp)
+)
+
+cat(
+  "Missing average SBP:",
+  missing_average_sbp,
+  "\n"
+)
+
+summary(
+  nhanes_data$average_sbp
+)
+```
+
+## Final Analytical Sample
+
+The final analytical sample includes participants with non-missing age, gender, and average SBP.
+
+```{r ex4-final-sample}
+nhanes_final <- nhanes_data %>%
+  filter(
+    !is.na(.data[[age_variable]]),
+    !is.na(.data[[gender_variable]]),
+    !is.na(average_sbp)
+  )
+
+original_sample_size <- nrow(nhanes_data)
+
+final_sample_size <- nrow(nhanes_final)
+
+number_removed <-
+  original_sample_size - final_sample_size
+```
+
+The original dataset contained **29,400 participants**. The final analytical sample contained 21,604 participants. A total of 7,796 participants were excluded because they did not meet the complete-case criteria for age, gender, and average SBP; all 7,796 had missing average SBP.
+
+```{r ex4-sample-size}
+sample_size_summary <- tibble(
+  sample = c(
+    "Original sample",
+    "Final analytical sample",
+    "Participants removed"
+  ),
+  number_of_participants = c(
+    original_sample_size,
+    final_sample_size,
+    number_removed
+  )
+)
+
+print(sample_size_summary)
+```
+
+## Hypertension and Age Categories
+
+Average SBP was categorized into four groups: Normal, Elevated, Stage 1 hypertension, and Stage 2 hypertension.
+
+```{r ex4-hypertension-category}
+nhanes_final <- nhanes_final %>%
+  mutate(
+    hypertension_category = case_when(
+      average_sbp < 120 ~ "Normal",
+      
+      average_sbp >= 120 &
+        average_sbp < 130 ~ "Elevated",
+      
+      average_sbp >= 130 &
+        average_sbp < 140 ~ "Stage 1 hypertension",
+      
+      average_sbp >= 140 ~ "Stage 2 hypertension",
+      
+      TRUE ~ NA_character_
+    ),
+    
+    hypertension_category = factor(
+      hypertension_category,
+      levels = c(
+        "Normal",
+        "Elevated",
+        "Stage 1 hypertension",
+        "Stage 2 hypertension"
+      )
+    )
+  )
+```
+
+Age was divided into five ordered groups to make comparisons across age ranges easier to interpret.
+
+```{r ex4-age-groups}
+nhanes_final <- nhanes_final %>%
+  mutate(
+    age_group = cut(
+      .data[[age_variable]],
+      breaks = c(
+        0,
+        19,
+        39,
+        59,
+        79,
+        Inf
+      ),
+      labels = c(
+        "0-19",
+        "20-39",
+        "40-59",
+        "60-79",
+        "80+"
+      ),
+      include.lowest = TRUE
+    ),
+    
+    age_group = factor(
+      age_group,
+      levels = c(
+        "0-19",
+        "20-39",
+        "40-59",
+        "60-79",
+        "80+"
+      )
+    )
+  )
+```
+
+## Characteristics of the Final Sample
+
+The final sample was examined using descriptive summaries. The gender distribution was also reviewed because gender will be used to separate the panels in the final visualization.
+
+```{r ex4-descriptive-summary}
+cat("Age summary:\n")
+
+print(
+  summary(
+    nhanes_final[[age_variable]]
+  )
+)
+
+cat("\nGender distribution:\n")
+
+gender_summary <- nhanes_final %>%
+  count(
+    .data[[gender_variable]]
+  )
+
+print(gender_summary)
+
+cat("\nAverage SBP summary:\n")
+
+print(
+  summary(
+    nhanes_final$average_sbp
+  )
+)
+
+cat("\nHypertension category distribution:\n")
+
+hypertension_summary <- nhanes_final %>%
+  count(
+    hypertension_category
+  )
+
+print(hypertension_summary)
+```
+
+The final sample contains both female and male participants, allowing the distribution of hypertension categories to be examined separately by gender. The average SBP distribution can also be examined using the resulting summary statistics.
+
+## Age Distribution Before and After Sample Selection
+
+The saved age distribution plot from Exercise 2 is reused here to compare the age distribution before sample selection with the age distribution in the final analytical sample.
+
+The Exercise 2 plot was created using the complete cleaned NHANES dataset and was saved as `age_distribution.png`.
+
+```{r ex4-reuse-exercise2-age-plot, out.width="90%"}
+knitr::include_graphics(
+   here("figures", "age_distribution.png")  
+)
+```
+
+The Exercise 2 age distribution represents the cleaned dataset before participants with missing information required for the final analysis were removed. The distribution in the final sample is shown below using the same age variable and the same five-year histogram bin width.
+
+```{r ex4-final-age-plot, fig.width=8, fig.height=6}
+plot_age_final <- ggplot(
+  nhanes_final,
+  aes(
+    x = .data[[age_variable]]
+  )
+) +
+  geom_histogram(
+    binwidth = 5,
+    boundary = 0,
+    color = "black"
+  ) +
+  labs(
+    title = "Age Distribution in the Final Analytical Sample",
+    x = "Age (years)",
+    y = "Number of Participants"
+  ) +
+  theme_classic()
+
+print(plot_age_final)
+```
+
+The two age distributions can be compared because they use the same age variable and five-year bins. The original Exercise 2 distribution is based on all 29,400 participants, whereas the final distribution is based on 21,604 participants. Because the removed observations are excluded from the final sample, the overall number of participants in the bars decreases. The shape of the age distribution can therefore be assessed to determine whether removing participants with missing information substantially changed the age composition of the sample.
+
+The final age distribution is also saved for future use.
+
+```{r ex4-save-final-age}
+ggsave(
+  here("figures", "exercise4_age_distribution_final.png"), 
+  plot = plot_age_final,
+  width = 8,
+  height = 6,
+  dpi = 300
+)
+```
+
+## Distribution of Hypertension Categories
+
+The distribution of average-SBP categories provides an overview of the blood pressure categories represented in the final analytical sample.
+
+```{r ex4-hypertension-plot, fig.width=9, fig.height=6}
+plot_hypertension <- ggplot(
+  nhanes_final,
+  aes(
+    x = hypertension_category,
+    fill = hypertension_category
+  )
+) +
+  geom_bar() +
+  labs(
+    title = "Distribution of Hypertension Categories",
+    x = "Hypertension Category",
+    y = "Number of Participants",
+    fill = "Hypertension Category"
+  ) +
+  scale_fill_brewer(
+    palette = "Set2"
+  ) +
+  theme_classic() +
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1
+    ),
+    legend.position = "bottom"
+  )
+
+print(plot_hypertension)
+```
+
+The categories are displayed in a logical order from Normal through Stage 2 hypertension. This makes it easier to compare the number of participants across progressively higher average SBP categories.
+
+```{r ex4-save-hypertension}
+ggsave(
+  here("figures", "exercise4_hypertension_categories.png"), 
+  plot = plot_hypertension,
+  width = 9,
+  height = 6,
+  dpi = 300
+)
+```
+
+## Figure: Gender Distribution
+
+```{r ex4-gender-plot, fig.width=8, fig.height=6}
+plot_gender <- ggplot(
+  nhanes_final,
+  aes(
+    x = .data[[gender_variable]],
+    fill = .data[[gender_variable]]
+  )
+) +
+  geom_bar() +
+  labs(
+    title = "Gender Distribution in the Final Analytical Sample",
+    x = "Gender",
+    y = "Number of Participants",
+    fill = "Gender"
+  ) +
+  scale_fill_brewer(
+    palette = "Set2"
+  ) +
+  theme_classic() +
+  theme(
+    legend.position = "bottom"
+  )
+
+print(plot_gender)
+```
+
+```{r ex4-save-gender}
+ggsave(
+  here("figures", "exercise4_gender_distribution.png"), 
+  plot = plot_gender,
+  width = 8,
+  height = 6,
+  dpi = 300
+)
+```
+## Hypertension Categories Across Age and Gender
+
+The final visualization examines the relationship between age group, gender, and hypertension category. Gender is displayed using separate panels, while age groups are ordered from youngest to oldest. Hypertension categories are represented using the fill colour.
+
+```{r ex4-final-visualization, fig.width=11, fig.height=7}
+final_plot <- ggplot(
+  nhanes_final,
+  aes(
+    x = age_group,
+    fill = hypertension_category
+  )
+) +
+  geom_bar(
+    position = "dodge"
+  ) +
+  facet_wrap(
+    vars(.data[[gender_variable]])
+  ) +
+  scale_fill_brewer(
+    palette = "Set2",
+    drop = FALSE
+  ) +
+  labs(
+    title = "Hypertension Categories Across Age Groups and Gender",
+    x = "Age Group",
+    y = "Number of Participants",
+    fill = "Hypertension Category"
+  ) +
+  theme_classic() +
+  theme(
+    strip.background = element_rect(
+      fill = "grey90"
+    ),
+    strip.text = element_text(
+      face = "bold"
+    ),
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1
+    ),
+    legend.position = "bottom"
+  )
+
+print(final_plot)
+```
+
+The faceted visualization allows the distribution of hypertension categories to be examined within each gender while also showing differences across age groups. The ordered age groups make the progression from younger to older participants clear, and the ordered hypertension categories provide a consistent interpretation of the legend across both panels.
+
+```{r ex4-save-final-visualization}
+ggsave(
+  here("figures", "exercise4_final_visualization.png"), 
+  plot = final_plot,
+  width = 11,
+  height = 7,
+  dpi = 300
+)
+```
+
+## Findings From the Final Sample
+
+The analysis began with 29,400 participants and resulted in a final analytical sample of 21,604 participants after excluding observations with missing age, gender, or average SBP. A total of 7,796 participants were therefore excluded from the final analysis.
+
+The age distribution in the final sample can be compared directly with the age distribution from Exercise 2 because the same variable and histogram bin width were used. The final sample contains fewer observations, but the comparison provides a visual assessment of whether the age distribution changed after removing participants with incomplete information.
+
+Gender was included in the final visualization as separate panels. This makes it possible to examine the distribution of hypertension categories across age groups while keeping the two gender groups visually distinct.
+
+The final visualization provides a combined view of age, gender, and hypertension categories. It shows how the number of participants in each average-SBP category varies across age groups and between the gender-specific panels.
+
+## Save the Final Analytical Dataset
+
+The final analytical dataset, including average SBP, hypertension category, and age group, is saved as a CSV file.
+
+```{r ex4-save-final-data}
+write_csv(
+  nhanes_final,
+  here("data", "NHANES_Exercise4_final.csv"),  
+)
+```
+
+## Exercise 4 Output Files
+
+The analysis produces the following files:
+
+* `exercise4_age_distribution_final.png`
+* `exercise4_hypertension_categories.png`
+* `exercise4_gender_distribution.png`
+* `exercise4_final_visualization.png`
+* `NHANES_Exercise4_final.csv`
+
+The original Exercise 2 plot reused in this analysis is:
+
+* `age_distribution.png`
+
+
+## Exercise 4 Conclusion
+
+The cleaned NHANES data were used to examine the relationship between age, gender, average systolic blood pressure, and hypertension categories. Average SBP was calculated from the available blood pressure readings, with participants having no available SBP measurements assigned a missing average. Participants with missing age, gender, or average SBP were excluded, resulting in a final analytical sample of 21,604 participants.
+
+The visualizations provide complementary views of the final sample. The comparison with the Exercise 2 age distribution shows how the age distribution changes after the sample is restricted to participants with complete information. The hypertension-category plot summarizes the distribution of average SBP categories, while the final faceted visualization examines these categories across age groups and gender. Together, these visualizations provide a concise description of the characteristics and relationships within the final analytical sample.
 
