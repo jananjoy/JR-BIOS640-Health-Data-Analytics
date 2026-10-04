@@ -6,10 +6,10 @@ output:
   pdf_document:
     toc: true
     number_sections: true
-  html_document:
-    toc: true
-    df_print: paged
-bibliography: citations/references.bib
+    extra_dependencies:
+      - array
+      - booktabs
+bibliography: "`r here::here('citations', 'references.bib')`"
 ---
 
 # Brief Introduction of NHANES dataset
