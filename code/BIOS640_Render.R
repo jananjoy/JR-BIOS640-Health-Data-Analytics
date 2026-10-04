@@ -7,7 +7,6 @@ library(rmarkdown)
 library(here)
 
 # Use for testing the Code
-#repo_dir <- "C:/Users/janan/OneDrive/Documents/GitHub/JR-BIOS640-Health-Data-Analytics"
 repo_dir <- here::here()
 
 print(repo_dir)
@@ -60,6 +59,7 @@ rmarkdown::render(
   input = rmd_file,
   output_dir = reports_dir,
   knit_root_dir = repo_dir,
+  params = list(),
   clean = TRUE
 )
 
