@@ -1,1 +1,281 @@
+---
+title: "Creating Complex Tables"
+author: "Jananjoy Rajkumar"
+date: "2026-10-03"
+output:
+  pdf_document:
+    toc: true
+    number_sections: true
+  html_document:
+    toc: true
+    df_print: paged
+bibliography: citations/references.bib
+---
 
+# Brief Introduction of NHANES dataset
+
+The National Health and Nutrition Examination Survey (NHANES) collects comprehensive health and nutrition information from the U.S. population [@nhanes]. This report provides a descriptive summary of the cleaned NHANES dataset used in this project.
+
+The tables summarize the sample across NHANES waves, including sample size, sex distribution, and ethnicity. Summary statistics for average systolic blood pressure (SBP) are also presented for each survey wave.
+
+# Load Packages and Import Dataset
+
+```{r setup, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(rio)
+library(here)
+library(knitr)
+library(kableExtra)
+
+nhanes_data <- import(
+  here("data", "cleaned_NHANES.csv")
+)
+```
+
+# Overall Sample Size by Wave
+
+The table below presents the total number of participants included in each NHANES wave, providing an overview of the sample size across survey periods.
+
+```{r sample-size-table}
+sample_size_by_wave <- nhanes_data %>%
+  group_by(wave_id) %>%
+  summarise(
+    sample_size = n(),
+    .groups = "drop"
+  )
+
+kable(
+  sample_size_by_wave,
+  format = "latex",
+  booktabs = TRUE,
+  caption = "Overall Sample Size by NHANES Wave",
+  col.names = c("NHANES Wave", "Sample Size")
+) %>%
+  kable_styling(
+    latex_options = "hold_position"
+  ) %>%
+  column_spec(
+    1,
+    bold = TRUE,
+    width = "3cm"
+  ) %>%
+  column_spec(
+    2,
+    width = "3cm"
+  ) %>%
+  footnote(
+    general = "Sample size represents the number of participants included in each NHANES wave."
+  )
+```
+
+# Number and Percentage of Male Participants by Wave
+
+The table below presents the number and percentage of male participants across NHANES waves. Percentages are calculated within each wave to provide a consistent basis for comparing the male participant distribution across survey periods.
+
+```{r male-table}
+male_by_wave <- nhanes_data %>%
+  group_by(wave_id) %>%
+  summarise(
+    sample_size = n(),
+    male_n = sum(gender == "Male", na.rm = TRUE),
+    male_percent = 100 * male_n / sample_size,
+    .groups = "drop"
+  ) %>%
+  select(wave_id, male_n, male_percent)
+
+kable(
+  male_by_wave,
+  format = "latex",
+  booktabs = TRUE,
+  digits = 1,
+  caption = "Number and Percentage of Male Participants by NHANES Wave",
+  col.names = c("NHANES Wave", "Male n", "Male (%)")
+) %>%
+  add_header_above(
+    c(" " = 1, "Male Participants" = 2)
+  ) %>%
+  kable_styling(
+    latex_options = "hold_position"
+  ) %>%
+  column_spec(
+    1,
+    bold = TRUE,
+    width = "3cm"
+  ) %>%
+  column_spec(
+    2:3,
+    width = "3cm"
+  ) %>%
+  row_spec(
+    0,
+    bold = TRUE
+  ) %>%
+  footnote(
+    general = "Percentages are calculated within each NHANES wave."
+  )
+```
+
+# Number and Percentage of Participants by Ethnicity and Wave
+
+The table below presents the number and percentage of participants in each ethnicity category across NHANES waves. Percentages are calculated within each wave to facilitate comparisons of the ethnicity distribution across survey periods.
+
+```{r ethnicity-table}
+ethnicity_by_wave <- nhanes_data %>%
+  filter(!is.na(ethnicity_2)) %>%
+  group_by(wave_id, ethnicity_2) %>%
+  summarise(
+    n = n(),
+    .groups = "drop"
+  ) %>%
+  group_by(wave_id) %>%
+  mutate(
+    percent = 100 * n / sum(n)
+  ) %>%
+  ungroup()
+
+kable(
+  ethnicity_by_wave,
+  format = "latex",
+  booktabs = TRUE,
+  digits = 1,
+  caption = "Ethnicity Distribution by NHANES Wave",
+  col.names = c(
+    "NHANES Wave",
+    "Ethnicity",
+    "n",
+    "Percent"
+  )
+) %>%
+  add_header_above(
+    c(
+      " " = 1,
+      "Ethnicity" = 1,
+      "Participant Distribution" = 2
+    )
+  ) %>%
+  kable_styling(
+    latex_options = "hold_position"
+  ) %>%
+  column_spec(
+    1,
+    bold = TRUE,
+    width = "3cm"
+  ) %>%
+  column_spec(
+    2,
+    width = "4cm"
+  ) %>%
+  column_spec(
+    3:4,
+    width = "2.5cm"
+  ) %>%
+  row_spec(
+    0,
+    bold = TRUE
+  ) %>%
+  footnote(
+    general = "Percentages are calculated within each NHANES wave."
+  )
+```
+
+# Summary Statistics of Average Systolic Blood Pressure by Wave
+
+Average systolic blood pressure(SBP) was calculated using the available systolic blood pressure measurements for each participant. Missing measurements were excluded from the calculation. Participants with no available measurements were assigned a missing value.
+
+```{r creating-average-sbp}
+nhanes_data <- nhanes_data %>%
+  mutate(
+    average_sbp = rowMeans(
+      select(
+        .,
+        systolic_bp_1,
+        systolic_bp_2,
+        systolic_bp_3,
+        systolic_bp_4
+      ),
+      na.rm = TRUE
+    ),
+    average_sbp = if_else(
+      is.nan(average_sbp),
+      NA_real_,
+      average_sbp
+    )
+  )
+```
+
+The following table summarizes the minimum, maximum, median, mean, and standard deviation of average systolic blood pressure within each NHANES wave.
+
+```{r sbp-summary-table}
+sbp_by_wave <- nhanes_data %>%
+  group_by(wave_id) %>%
+  summarise(
+    minimum = if (all(is.na(average_sbp))) NA_real_
+              else min(average_sbp, na.rm = TRUE),
+    maximum = if (all(is.na(average_sbp))) NA_real_
+              else max(average_sbp, na.rm = TRUE),
+    median = median(average_sbp, na.rm = TRUE),
+    mean = mean(average_sbp, na.rm = TRUE),
+    standard_deviation = sd(average_sbp, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+kable(
+  sbp_by_wave,
+  format = "latex",
+  booktabs = TRUE,
+  digits = 1,
+  caption = "Summary Statistics of Average Systolic Blood Pressure by NHANES Wave",
+  col.names = c(
+    "NHANES Wave",
+    "Minimum",
+    "Maximum",
+    "Median",
+    "Mean",
+    "Standard Deviation"
+  )
+) %>%
+  add_header_above(
+    c(
+      " " = 1,
+      "Average Systolic Blood Pressure (mm Hg)" = 5
+    )
+  ) %>%
+  kable_styling(
+    latex_options = "hold_position"
+  ) %>%
+  column_spec(
+    1,
+    bold = TRUE,
+    width = "3cm"
+  ) %>%
+  column_spec(
+    2:6,
+    width = "2.5cm"
+  ) %>%
+  row_spec(
+    0,
+    bold = TRUE
+  ) %>%
+  footnote(
+    general = "Average systolic blood pressure was calculated from available systolic blood pressure measurements. Missing measurements were excluded from the calculation."
+  )
+```
+
+# Summary of Findings
+
+The main findings of the analysis are summarized below:
+
+- **Sample Size:** The NHANES sample includes participants from multiple survey waves, with sample sizes varying across waves.
+
+- **Sex Distribution:** The proportion of male participants varies across survey waves. The table presents both the number and percentage of male participants within each wave.
+
+- **Ethnicity Distribution:** The ethnicity table shows the number and percentage of participants in each cleaned ethnicity category across NHANES waves, allowing comparisons while accounting for differences in sample size.
+
+- **Systolic Blood Pressure:** Average systolic blood pressure varies across NHANES waves. The minimum, maximum, median, mean, and standard deviation describe the distribution and variability of SBP in each wave.
+
+- **Interpretation:** These results provide a descriptive overview of the NHANES sample and do not, by themselves, establish causal relationships or statistically significant differences between survey waves.
+
+
+# References
+
+References are generated from the BibTeX entries in `citations/references.bib` cited throughout the report. The bibliography file should contain an entry with the citation key `nhanes`.
